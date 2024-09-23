@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 public class Git {
     public Git () {
@@ -18,14 +19,23 @@ public class Git {
             index.createNewFile();
         }
     }
-    public void deleteRepo()
+    public void deleteRepo() // deletes git directory
     {
-        File index = new File("git/objects/index");
-        if(index.exists())
+        File git = new File("git");
+        if(git.exists())
         {
-            index.delete();
-            new File("git/objects").delete();
-            new File("git").delete();
+            deleteDirectory(git);
         }
+    }
+    public void deleteDirectory(File file) // recursively deletes all the directories and files in a directory
+    //adapted from https://stackoverflow.com/questions/20281835/how-to-delete-a-folder-with-files-using-java
+    {
+        File[] contents = file.listFiles();
+        if (contents != null) {
+            for (File f : contents) {
+                deleteDirectory(f);
+            }
+        }
+        file.delete();
     }
 }
