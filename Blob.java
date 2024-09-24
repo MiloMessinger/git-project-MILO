@@ -12,19 +12,25 @@ import java.util.zip.GZIPOutputStream;
 
 public class Blob
 {
+    String pathName;
+    String fileName;
+    String hashName;
     public Blob(String pathName, boolean compressed) throws IOException{
         File blobFile = new File(pathName);
+        this.pathName = pathName;
         if(blobFile.exists()) // checks to see if this file even exists
         {
             String hashName = generateName(blobFile, compressed);
+            this.hashName = hashName;
             String fileName = blobFile.getName();
+            this.fileName = fileName;
             File backup = new File("git/objects/" + hashName);
             if(!backup.exists()) //checks to see if it is already backed up
             {
                 backup.createNewFile(); //this part creates the backup
                 FileWriter fileWritter = new FileWriter(backup,true);
                 BufferedWriter bufferWritter = new BufferedWriter(fileWritter);
-                String contents = getData(blobFile);
+                String contents = compress(getData(blobFile));
                 bufferWritter.write(contents, 0, contents.length());
                 bufferWritter.close();
 
@@ -59,7 +65,7 @@ public class Blob
         bReader.close();
         return data.toString();
     }
-    public static String toSHA1(byte[] convertme) { //converts a byte array into SHA1; https://stackoverflow.com/questions/4895523/java-string-to-sha1
+    public String toSHA1(byte[] convertme) { //converts a byte array into SHA1; https://stackoverflow.com/questions/4895523/java-string-to-sha1
         MessageDigest md = null; //don't really understand what any of this does, but it works
         try {
             md = MessageDigest.getInstance("SHA-1");
@@ -69,7 +75,7 @@ public class Blob
         } 
         return byteArrayToHexString(md.digest(convertme));
     }   
-    public static String byteArrayToHexString(byte[] b) { //converts byte array into a hex string. part of the SHA1 conversion process; https://stackoverflow.com/questions/4895523/java-string-to-sha1
+    public String byteArrayToHexString(byte[] b) { //converts byte array into a hex string. part of the SHA1 conversion process; https://stackoverflow.com/questions/4895523/java-string-to-sha1
         String result = "";
         for (int i=0; i < b.length; i++) {
           result +=
@@ -77,7 +83,7 @@ public class Blob
         }
         return result;
     }
-    public static String compress(String str) throws IOException { //compresses a string. source is https://stackoverflow.com/questions/3649485/how-to-compress-a-string-in-java
+    public String compress(String str) throws IOException { //compresses a string. source is https://stackoverflow.com/questions/3649485/how-to-compress-a-string-in-java
         if (str == null || str.length() == 0) {
             return str;
         }
@@ -86,5 +92,17 @@ public class Blob
         gzip.write(str.getBytes());
         gzip.close();
         return out.toString("ISO-8859-1");
+    }
+    public String getPathName()
+    {
+        return pathName;
+    }
+    public String getFileName()
+    {
+        return fileName;
+    }
+    public String getHashName()
+    {
+        return hashName;
     }
 }

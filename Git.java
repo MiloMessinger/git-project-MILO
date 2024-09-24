@@ -19,7 +19,7 @@ public class Git {
             index.createNewFile();
         }
     }
-    public void deleteRepo() // deletes git directory
+    public void checkAndDeleteRepo() // checks and deletes git directory and everythibg inside
     {
         File git = new File("git");
         if(git.exists())
