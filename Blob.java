@@ -67,13 +67,28 @@ public class Blob
             }
             reader.close();
             if (!isInIndex){
-                File indexFile = new File("git/index"); // this part adds it to index
-                BufferedWriter bufferWritter2 = new BufferedWriter(new FileWriter(indexFile,true));
-                if (isDirectory)
-                    bufferWritter2.write("tree " + hashName + " " + fileName + "\n");
-                else
-                    bufferWritter2.write("blob " + hashName + " " + fileName + "\n");
-                bufferWritter2.close();
+                boolean isDuplicate = false;
+                String lineFound = "";
+                File indexFile = new File("./git/index"); // this part adds it to index
+                try (BufferedReader br = new BufferedReader(new FileReader(indexFile))) {
+                    String lineRead;
+                    while ((lineRead = br.readLine()) != null) {
+                        String lineModify = lineRead + "end";
+                        if (lineModify.contains(pathName + "end")) {
+                            lineFound = lineRead;
+                            isDuplicate = true;
+                        }
+                    }
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if (isDuplicate){
+                    replaceLine("./git/index", lineFound, index);
+                }
+                else{
+                    writeData(indexFile, index + "\n", true);
+                }
             }
         }
         else{
@@ -81,8 +96,33 @@ public class Blob
         }
     }
 
+    public static void replaceLine(String filePath, String lineToDelete, String lineToReplace){
+        try {
+            File file = new File(filePath);
+            File tempIndexFile = new File("tempIndex");
+            BufferedWriter writer = new BufferedWriter(new FileWriter(tempIndexFile, false));
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line = br.readLine();
+            while (line != null){
+                if (line.equals(lineToDelete)){
+                    writer.write(lineToReplace + "\n");
+                }
+                else{
+                    writer.write(line + "\n");
+                }
+                line = br.readLine();
+            }
+            writer.close();
+            br.close();
+            boolean bool1 = tempIndexFile.renameTo(file);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     // takes a String of data and uses SHA1 to turn it into a unique filename String; all me baby
-    public String generateName(File file, boolean compressed) throws IOException 
+    public static String generateName(File file, boolean compressed) throws IOException 
     {
         String data = getData(file); //first we get the data inside the file
         if(compressed) // then we may or may not compress the data
@@ -92,7 +132,7 @@ public class Blob
     }
 
     // reads and returns the data from a file; written all by myself :)
-    public String getData(File file) throws IOException 
+    public static String getData(File file) throws IOException 
     {
         FileReader reader = new FileReader(file);
         BufferedReader bReader = new BufferedReader(reader);
@@ -104,9 +144,19 @@ public class Blob
         return data.toString();
     }
 
+    // reads and returns the data from a file; written all by myself :)
+    //if append = true, doesn't overwrite
+    public static void writeData(File file, String string, boolean append) throws IOException 
+    {
+        FileWriter writer = new FileWriter(file, append);
+        BufferedWriter bWriter = new BufferedWriter(writer);
+        bWriter.write(string);
+        bWriter.close();
+    }
+
     //converts a byte array into SHA1; 
     //https://stackoverflow.com/questions/4895523/java-string-to-sha1
-    public String toSHA1(byte[] convertme) { 
+    public static String toSHA1(byte[] convertme) { 
         MessageDigest md = null; //don't really understand what any of this does, but it works
         try {
             md = MessageDigest.getInstance("SHA-1");
@@ -119,7 +169,7 @@ public class Blob
 
     //converts byte array into a hex string. part of the SHA1 conversion process; 
     // https://stackoverflow.com/questions/4895523/java-string-to-sha1
-    public String byteArrayToHexString(byte[] b) { 
+    public static String byteArrayToHexString(byte[] b) { 
         String result = "";
         for (int i=0; i < b.length; i++) {
           result +=
@@ -130,7 +180,7 @@ public class Blob
 
     //compresses a string. source is 
     // https://stackoverflow.com/questions/3649485/how-to-compress-a-string-in-java
-    public String compress(String str) throws IOException { 
+    public static String compress(String str) throws IOException { 
         if (str == null || str.length() == 0) {
             return str;
         }
